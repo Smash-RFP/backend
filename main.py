@@ -1,8 +1,24 @@
+import sys
+import os
+
 import uvicorn
 from fastapi import FastAPI, HTTPException, Body
 from typing import Optional
-# from model import process_ai_query
+current_file_path = os.path.abspath(__file__)
+backend_dir = os.path.dirname(current_file_path)
+project_root = os.path.dirname(backend_dir)
+sys.path.append(project_root)
 
+current_file_path =os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_file_path)
+
+# ai_engineer 디렉토리를 Python 경로에 추가
+ai_engineer_path = os.path.join(project_root, "ai_engineer")
+sys.path.append(ai_engineer_path)
+
+from ai_engineer.main import openai_llm_response
+
+# AI-engineer 경로 추가
 app = FastAPI()
 
 @app.post("/ask")
