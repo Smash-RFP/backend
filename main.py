@@ -21,6 +21,7 @@ from ai_engineer.main import openai_llm_response
 # AI-engineer 경로 추가
 app = FastAPI()
 
+# /ask라는 URL 경로에 대해 POST HTTP 요청이 들어오면, FastAPI가 이 함수를 실행
 @app.post("/ask")
 async def ask_ai_model(
     model: str = "gpt.4.1-nano",
@@ -34,16 +35,11 @@ async def ask_ai_model(
             model=model
         )
 
-        response_data = {
+        # 반환하는 값은 클라이언트(요청을 보낸 곳)에게 다시 전달
+        return {
             "response_text": response_text,
             "previous_response_id": previous_response_id,
             "model": model
-        }
-
-        return {
-            "response_text": response_data["response_text"],
-            "previous_response_id": response_data["previous_response_id"],
-            "model": response_data["model"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
