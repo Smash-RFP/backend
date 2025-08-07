@@ -4,8 +4,8 @@ import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, Body
 from typing import Optional
-
 from fastapi.middleware.cors import CORSMiddleware
+
 current_file_path = os.path.abspath(__file__)
 backend_dir = os.path.dirname(current_file_path)
 project_root = os.path.dirname(backend_dir)
@@ -18,7 +18,7 @@ project_root = os.path.dirname(current_file_path)
 ai_engineer_path = os.path.join(project_root, "ai_engineer")
 sys.path.append(ai_engineer_path)
 
-# from ai_engineer.main import openai_llm_response
+from ai_engineer.main import openai_llm_response
 
 # AI-engineer 경로 추가
 app = FastAPI()
@@ -36,24 +36,40 @@ app.add_middleware(
 # http://.../ask?model=gpt-4.1-nano
 @app.post("/ask")
 async def ask_ai_model(
-    model: str = "gpt.4.1-nano",
+    model: str = "gpt-4.1-nano",
     user_query: str = Body(..., description="사용자가 보낸 질문 텍스트"), # Body(...)'는 이 값이 본문에 포함되어야 하며, 필수 값
     previous_response_id: Optional[str] = Body(None, description="이전 대화의 ID, 연속적인 대화에 사용") # 'Body(None, ...)'는 body에 포함, 안 될 수도 있는 선택적 필드
 ):
     try:
-        # response_text, previous_response_id = openai_llm_response(
-        #     user_query=user_query, 
-        #     previous_response_id=previous_response_id, 
-        #     model=model
-        # )
+        # 요청 로깅
+        print("=" * 50)
+        print("클라이언트 요청 받음")
+        print(f"모델: {model}")
+        print(f"사용자 질문: {user_query}")
+        print(f"이전 응답 ID: {previous_response_id}")
+        print("=" * 50)
+        
+        response_text, previous_response_id = openai_llm_response(
+            user_query=user_query, 
+            previous_response_id=previous_response_id, 
+            model=model
+        )
+
+        # 응답 로깅
+        print("=" * 50)
+        print("AI 응답 생성 완료")
+        print(f"응답 텍스트: {response_text}")
+        print(f"새로운 응답 ID: {previous_response_id}")
+        print("=" * 50)
 
         # 반환하는 값은 클라이언트(요청을 보낸 곳)에게 다시 전달
         return {
-            "response_text": '만나서 너무 반가워',
-            "previous_response_id": 'previous_response_id',
-            "model": 'model'
+            "response_text": response_text,
+            "previous_response_id": previous_response_id,
+            "model": model
         }
     except Exception as e:
+        print(f"❌ 에러 발생: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
