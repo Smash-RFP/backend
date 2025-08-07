@@ -22,6 +22,7 @@ from ai_engineer.main import openai_llm_response
 app = FastAPI()
 
 # /ask라는 URL 경로에 대해 POST HTTP 요청이 들어오면, FastAPI가 이 함수를 실행
+# http://.../ask?model=gpt-4.1-nano
 @app.post("/ask")
 async def ask_ai_model(
     model: str = "gpt.4.1-nano",
