@@ -25,6 +25,14 @@ try:
     openai_llm_response = _openai_llm_response
 except Exception as e:
     _AI_ENGINEER_IMPORT_ERROR = e
+    # 폴백: 배포 환경에 ai_engineer가 없을 때 간단히 에코하는 대체 함수 제공
+    def openai_llm_response(user_query: str, previous_response_id: str | None, model: str):
+        warning = (
+            "[fallback] ai_engineer 모듈이 없어 간단 에코 응답을 반환합니다. "
+            f"원인: {_AI_ENGINEER_IMPORT_ERROR}"
+        )
+        print(warning)
+        return f"Echo: {user_query}", previous_response_id
 
 # AI-engineer 경로 추가
 app = FastAPI()
