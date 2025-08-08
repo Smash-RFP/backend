@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Body
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 
-AI_ENGINEER_BASE_URL = os.getenv("AI_ENGINEER_BASE_URL") or "http://34.118.200.114:8000"
+AI_ENGINEER_BASE_URL = os.getenv("AI_ENGINEER_BASE_URL")
 AI_ENGINEER_API_KEY = os.getenv("AI_ENGINEER_API_KEY")
 
 # AI-engineer 경로 추가
