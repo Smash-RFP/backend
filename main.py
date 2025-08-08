@@ -1,38 +1,13 @@
-import sys
 import os
 
 import uvicorn
+import httpx
 from fastapi import FastAPI, HTTPException, Body
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 
-current_file_path = os.path.abspath(__file__)
-backend_dir = os.path.dirname(current_file_path)
-project_root = os.path.dirname(backend_dir)
-sys.path.append(project_root)
-
-current_file_path =os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_file_path)
-
-# ai_engineer 디렉토리를 Python 경로에 추가
-ai_engineer_path = os.path.join(project_root, "ai_engineer")
-sys.path.append(ai_engineer_path)
-
-openai_llm_response = None
-_AI_ENGINEER_IMPORT_ERROR = None
-try:
-    from ai_engineer.main import openai_llm_response as _openai_llm_response
-    openai_llm_response = _openai_llm_response
-except Exception as e:
-    _AI_ENGINEER_IMPORT_ERROR = e
-    # 폴백: 배포 환경에 ai_engineer가 없을 때 간단히 에코하는 대체 함수 제공
-    def openai_llm_response(user_query: str, previous_response_id: str | None, model: str):
-        warning = (
-            "[fallback] ai_engineer 모듈이 없어 간단 에코 응답을 반환합니다. "
-            f"원인: {_AI_ENGINEER_IMPORT_ERROR}"
-        )
-        print(warning)
-        return f"Echo: {user_query}", previous_response_id
+AI_ENGINEER_BASE_URL = os.getenv("AI_ENGINEER_BASE_URL") or "http://34.118.200.114:8000"
+AI_ENGINEER_API_KEY = os.getenv("AI_ENGINEER_API_KEY")
 
 # AI-engineer 경로 추가
 app = FastAPI()
@@ -55,15 +30,8 @@ async def ask_ai_model(
     previous_response_id: Optional[str] = Body(None, description="이전 대화의 ID, 연속적인 대화에 사용") # 'Body(None, ...)'는 body에 포함, 안 될 수도 있는 선택적 필드
 ):
     try:
-        if openai_llm_response is None:
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    "ai_engineer 모듈을 불러올 수 없습니다. 레포에 `ai_engineer/main.py`와 "
-                    "`openai_llm_response` 함수를 포함하거나, 해당 모듈을 의존성으로 배포하세요. "
-                    f"원인: {_AI_ENGINEER_IMPORT_ERROR}"
-                ),
-            )
+        if not AI_ENGINEER_BASE_URL:
+            raise HTTPException(status_code=500, detail="AI_ENGINEER_BASE_URL 환경변수가 설정되지 않았습니다.")
         # 요청 로깅
         print("=" * 50)
         print("클라이언트 요청 받음")
@@ -72,11 +40,21 @@ async def ask_ai_model(
         print(f"이전 응답 ID: {previous_response_id}")
         print("=" * 50)
         
-        response_text, previous_response_id = openai_llm_response(
-            user_query=user_query, 
-            previous_response_id=previous_response_id, 
-            model=model
-        )
+        payload = {
+            "model": model,
+            "user_query": user_query,
+            "previous_response_id": previous_response_id,
+        }
+        headers = {}
+        if AI_ENGINEER_API_KEY:
+            headers["Authorization"] = f"Bearer {AI_ENGINEER_API_KEY}"
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{AI_ENGINEER_BASE_URL}/ask", json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            response_text = data.get("response_text")
+            previous_response_id = data.get("previous_response_id")
 
         # 응답 로깅
         print("=" * 50)
