@@ -18,7 +18,13 @@ project_root = os.path.dirname(current_file_path)
 ai_engineer_path = os.path.join(project_root, "ai_engineer")
 sys.path.append(ai_engineer_path)
 
-from ai_engineer.main import openai_llm_response
+openai_llm_response = None
+_AI_ENGINEER_IMPORT_ERROR = None
+try:
+    from ai_engineer.main import openai_llm_response as _openai_llm_response
+    openai_llm_response = _openai_llm_response
+except Exception as e:
+    _AI_ENGINEER_IMPORT_ERROR = e
 
 # AI-engineer 경로 추가
 app = FastAPI()
