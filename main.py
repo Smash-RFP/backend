@@ -41,6 +41,15 @@ async def ask_ai_model(
     previous_response_id: Optional[str] = Body(None, description="이전 대화의 ID, 연속적인 대화에 사용") # 'Body(None, ...)'는 body에 포함, 안 될 수도 있는 선택적 필드
 ):
     try:
+        if openai_llm_response is None:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "ai_engineer 모듈을 불러올 수 없습니다. 레포에 `ai_engineer/main.py`와 "
+                    "`openai_llm_response` 함수를 포함하거나, 해당 모듈을 의존성으로 배포하세요. "
+                    f"원인: {_AI_ENGINEER_IMPORT_ERROR}"
+                ),
+            )
         # 요청 로깅
         print("=" * 50)
         print("클라이언트 요청 받음")
@@ -66,7 +75,6 @@ async def ask_ai_model(
         return {
             "response_text": response_text,
             "previous_response_id": previous_response_id,
-            "model": model
         }
     except Exception as e:
         print(f"❌ 에러 발생: {str(e)}")
